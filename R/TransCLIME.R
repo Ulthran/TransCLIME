@@ -5,66 +5,21 @@ library(glasso)#for joint graph estimator (Guo et al 2011)
 library(lavaSearch2) #only to symmetrize matrices
 #library(BDcocolasso) #admm for spd projection
 
-#generate the data for simulation
-
-DataGen<-function(K,A.size,h, n.vec,s=10, p=100,type='Toep', ntest=100){
-  
-  if(type=='Toep'){
-    Theta<-toeplitz(0.6^(1:p)*2)
-    Theta[which(abs(Theta)<=0.05, arr.ind=T)]<- 0
-  }else if(type=='Bdiag'){
-    Theta<-kronecker(diag(p/4), toeplitz(c(1.2,0.9,0.6,0.3)))
-  }else{
-    Theta<-diag(1,p)+matrix(runif(p^2,0, 0.8),ncol=p,nrow=p)
-    Theta<-(Theta+t(Theta))/2
-    for(j in 1:p){
-      for(l in 1:p){
-        Theta[j,l]=Theta[j,l]/sqrt(abs(j-l)+1)
-      }
-    }
-   for(j in 1:p){
-      Theta[,j]<-Theta[,j]*(abs(Theta[,j])>=quantile(abs(Theta[,j]),1-s/p))
-      Theta[j,]<-Theta[j,]*(abs(Theta[j,])>=quantile(abs(Theta[j,]),1-s/p))
-    }
-    Theta<-diag(max(0.1-min(eigen(Theta)$values),0),p)+Theta
-  }
-  Sig<- solve(Theta)
-  X<-rmvnorm(n.vec[1],rep(0,p), sigma=Sig)
-  Theta.out<-diag(1,p)
-  Omega.vec<-0
-  for(k in 1 : K){
-    if(k<=A.size){
-      Delta.k<-matrix(rbinom(p^2,size=1,prob=0.1)*runif(p^2,-h/p,h/p),ncol=p)
-      #  cat(max(colSums(abs(Delta.k))),'\n')
-      Sig.k<-(diag(1,p)+Delta.k)%*%Sig 
-      Sig.k<-(Sig.k+t(Sig.k))/2
-      if(min(eigen(Sig.k)$values)<0.05){
-        Sig.k<-Sig.k+diag(0.1-min(eigen(Sig.k)$values),p)
-      }
-      X<- rbind(X, rmvnorm(n.vec[k+1],rep(0,p), sigma=Sig.k))
-    }else{
-      #Delta.out<-diag(0.5,p)+matrix(rbinom(p^2,size=1,prob=0.4)*runif(p^2,-0.2,0.2),ncol=p)
-      Delta.out<-diag(1,p)+matrix(rbinom(p^2,size=1,prob=0.1)*0.4,ncol=p)
-      Sig.k<-(diag(1,p)+Delta.out)%*%Sig
-      Sig.k<-(Sig.k+t(Sig.k))/2
-      if(min(eigen(Sig.k)$values)<0.05){
-        Sig.k<-Sig.k+diag(0.1-min(eigen(Sig.k)$values),p)
-      }
-      X<- rbind(X, rmvnorm(n.vec[k+1],rep(0,p), sigma=Sig.k))
-    }
-    Omega.vec<-c(Omega.vec, max(colSums(abs(diag(1,p)-Sig.k%*%Theta))))
-    
-  }
-  cat(Omega.vec,'\n')
-  list(X=X, Theta0=Theta, X.test=rmvnorm(ntest,rep(0,p), sigma=Sig), Omega.l1=max(Omega.vec))
-  
-}
-
-###algorithm based on fastclime package
-### min \|Theta\|_1
-###subject to \|cov(X)%*%Theta-Bmat\|_max <=lambda (if X is the raw sample)
-###subject to \|X%*%Theta-Bmat\|_max <=lambda (if X is the sample covariance matrix)
-
+#' Algorithm based on fastclime package
+#' min \|Theta\|_1
+#' subject to \|cov(X)%*%Theta-Bmat\|_max <=lambda (if X is the raw sample)
+#' subject to \|X%*%Theta-Bmat\|_max <=lambda (if X is the sample covariance matrix)
+#'
+#' @param X is SOMETHING
+#' @param Bmat is SOMETHING
+#' @param lambda is SOMETHING (default: 0.1)
+#' @param scale is SOMETHING (default: T)
+#' @param n is SOMETHING
+#'
+#' @return is a named list containing \itemize{
+#' \item \code{Theta.hat} SOMETHING
+#' \item \code{conv} SOMETHING
+#' }
 Myfastclime.s<-function(X,Bmat,lambda=0.1, scale=T, n){
   p<-ncol(X)
   obj=rep(-1,2*p)
@@ -96,7 +51,7 @@ Myfastclime.s<-function(X,Bmat,lambda=0.1, scale=T, n){
     }else if(scale){
       Theta.hat[,j]<-  as.numeric(Bmat[j,j]/ (Sig.hat0[j,]%*%Theta.hat[,j]))*Theta.hat[,j]
      # Theta.hat[,j]<-as.numeric(Theta.hat[j,j]/ (t(Theta.hat[,j])%*%Sig.hat0%*%Theta.hat[,j]))*Theta.hat[,j]
-      
+
     }
   }
   if(!feasible){
@@ -106,8 +61,16 @@ Myfastclime.s<-function(X,Bmat,lambda=0.1, scale=T, n){
   list(Theta.hat=Theta.hat, conv=feasible)
 }
 
-## compute the semi-positive definite projection of SigA.hat 
-## with smallest eigenvalue lower bounded by eps
+#' Compute the semi-positive definite projection of SigA.hat
+#' with smallest eigenvalue lower bounded by eps
+#'
+#' @param SigA.hat is the input matrix
+#' @param eps is the epsilon value
+#'
+#' @return is a named list containing \itemize{
+#' \item \code{mat} SOMETHING
+#' \item \code{conv} SOMETHING
+#' }
 Spd.proj<-function(SigA.hat, eps=NULL){
   p=ncol(SigA.hat)
   if(is.null(eps)){
@@ -123,39 +86,61 @@ Spd.proj<-function(SigA.hat, eps=NULL){
   list(mat=SigA.t, conv=feasible)
 }
 
-###https://rdrr.io/github/celiaescribe/BDcocolasso/src/R/ADMM_proj.R
+#' Sourced from: https://rdrr.io/github/celiaescribe/BDcocolasso/src/R/ADMM_proj.R
 l1proj<-function(v, b){
-  
+
   # Efficient projection onto L1 ball of specified radius (i.e. b), used by the admm algo
   # Ref. Duchi et al. (2008). Efficient Projections onto the L1-Ball for Learning in High Dimensions, ICML
-  
+
   stopifnot(b>0)
-  
+
   u <- sort(abs(v),decreasing=TRUE)
   sv <- cumsum(u)
   rho <- max(which(u>(sv-b)/1:length(u)))
   theta <- max(0, (sv[rho]-b)/rho)
   w <-sign(v) * pmax(abs(v)-theta,0)
-  
+
   return(w)
 }
-###https://rdrr.io/github/celiaescribe/BDcocolasso/src/R/ADMM_proj.R
+
+#' Sourced from: https://rdrr.io/github/celiaescribe/BDcocolasso/src/R/ADMM_proj.R
+#' ADMM algorithm
+#'
+#' Finds the nearest positive semi-definite matrix with respect to the max norm
+#'
+#' @param mat Matrix to be projected
+#' @param epsilon Approximation of the space of positive semi-definite matrix at epsilon
+#' @param mu Penalty parameter of ADMM algorithm
+#' @param it.max Number maximum of iterations
+#' @param etol Tolerance parameter for the convergence of primal and dual residual
+#' @param etol_distance Tolerance parameter for the convergence of the distance
+#'
+#' @return list containing \itemize{
+#' \item \code{mat} Projected matrix
+#' \item \code{df_ADMM} dataframe containing parameters of the ADMM algorithm for each iteration of the algorithm
+#' }
+#'
+#' @examples
+#' M = matrix(-1,20,20)
+#' mat_proj <- BDcocolasso::ADMM_proj(mat=M)$mat
+#'
+#' @seealso \url{https://web.stanford.edu/~boyd/papers/pdf/admm_distr_stats.pdf}
 ADMM_proj<-function(mat,
                     epsilon=1e-4,
                     mu=10,
                     it.max=1e3,
                     etol=1e-4,
                     etol_distance = 1e-4){
-  
-  
-  
+
+
+
   p<-nrow(mat)
-  
+
   # Initialization
   R<-diag(mat)
   S<-matrix(0,p,p)
   L<-matrix(0,p,p)
-  
+
   itr<-0
   iteration <- eps_R <- eps_S <- eps_primal <- time <- distance <- NULL
   while (itr<it.max) {
@@ -165,20 +150,20 @@ ADMM_proj<-function(mat,
     start <- Sys.time()
     # Subproblem I: R step
     W<-mat+S+mu*L
-    W.eigdec<-eigen(W, symmetric=TRUE) 
+    W.eigdec<-eigen(W, symmetric=TRUE)
     W.V<-W.eigdec$vectors
     W.D<-W.eigdec$values
     R<-W.V%*%diag(pmax(W.D,epsilon))%*%t(W.V)
-    
+
     # Subproblem II: S step
-    M<-R-mat-mu*L     
-    S[lower.tri(S, diag = TRUE)]<-M[lower.tri(M, diag = TRUE)]-l1proj(v=M[lower.tri(M, diag = TRUE)],b=mu/2)    
+    M<-R-mat-mu*L
+    S[lower.tri(S, diag = TRUE)]<-M[lower.tri(M, diag = TRUE)]-l1proj(v=M[lower.tri(M, diag = TRUE)],b=mu/2)
     for (i in 2:p){
       for (j in 1:(i-1)){
         S[j,i]<-S[i,j]
       }
     }
-    
+
     # L step: update the Lagrange parameter
     L<-L-(R-S-mat)/mu
     end <- Sys.time()
@@ -189,26 +174,26 @@ ADMM_proj<-function(mat,
     eps_primal <- c(eps_primal, max(abs(R-S-mat)))
     time <- c(time, end - start)
     distance <- c(distance,max(abs(R-mat)))
-    
-    # Stopping Rule                        
+
+    # Stopping Rule
     #cat("check the stopping criterion:",max(abs(R-S-mat)),"\n")
     if (((max(abs(R-Rp))<etol) && (max(abs(S-Sp))<etol) && (max(abs(R-S-mat))<etol)) || (abs(max(abs(Rp-mat)) - max(abs(R-mat)))<etol_distance)){
       itr<-it.max
     } else {
       itr<-itr+1
     }
-    
+
     if (itr%%20==0) {
       mu<-mu/2
     }
   }
   df_ADMM <- data.frame(iteration = iteration, eps_R = eps_R, eps_S=eps_S, eps_primal=eps_primal, time=time, distance=distance)
   return(list(mat=R,df_ADMM=df_ADMM))
-  
+
 }
 
 ####the main Trans-CLIME algorithm###
-##X: primary data; X.A: {X^{(k)}, k in A}; lambda:lambda.Theta; 
+##X: primary data; X.A: {X^{(k)}, k in A}; lambda:lambda.Theta;
 ### agg: perform LS aggregation or not; X.til: samples for aggregation; Theta.cl: CLIME estimator
 Trans.CLIME<-function(X,X.A, const, agg=T, X.til=NULL,Theta.cl){
   if(agg &is.null(X.til)){
@@ -220,7 +205,7 @@ Trans.CLIME<-function(X,X.A, const, agg=T, X.til=NULL,Theta.cl){
   sigA.hat<-mean(apply(X.A, 2, sd))
   sig0.hat<-mean(apply(X, 2, sd))
 
-  lam.delta<-2*sig0.hat*sqrt(log(p)/n0) 
+  lam.delta<-2*sig0.hat*sqrt(log(p)/n0)
   omega.l1<-mean(apply(Theta.cl,2, function(x) sum(abs(x))))
   Delta.re <- Myfastclime.s(X=diag(1,p), Bmat=diag(1,p)-t(Theta.cl)%*%cov(X.A), lambda=omega.l1*sqrt(log(p)/n0) , scale=F)
   if(Delta.re$conv){Delta.hat<-Delta.re$Theta.hat}else{ Delta.hat<-diag(0,p) }
@@ -236,7 +221,7 @@ Trans.CLIME<-function(X,X.A, const, agg=T, X.til=NULL,Theta.cl){
   Omega.hat
 }
 
-####LS aggregation function with 
+####LS aggregation function with
 ### Theta.init=(Omega.clime, Theta.hat) and X.til: some primary samples
 Agg<-function(Theta.init, X.til){
   p<-ncol(X.til)
@@ -248,18 +233,24 @@ Agg<-function(Theta.init, X.til){
     v0
   })
   Theta.hat<-sapply(1:p, function(j) cbind(Theta.init[,j], Theta.init[,p+j])%*% v.mat[,j])
-  
+
   Theta.hat
 }
 
 
 
-###cross validation for selecting tuning parameters
-
+#' Cross validation for selecting tuning parameters
+#'
+#' @param X is SOMETHING
+#' @param nfold is the number of folds (default: 5)
+#'
+#' @return is SOMETHING
+#'
+#' @importFrom caret createFolds
 cv.clime<-function(X, nfold=5){
   p<-ncol(X)
   library(caret)
-  folds<-createFolds(1:nrow(X), k=nfold)
+  folds<-caret::createFolds(1:nrow(X), k=nfold)
   te<-NULL
   lam.seq<-seq(0.3,1.2,length.out=10)*2*sqrt(log(p)/nrow(X)*nfold/(nfold-1))
   for(i in 1:nfold){
@@ -268,19 +259,19 @@ cv.clime<-function(X, nfold=5){
       Dist(X.test=X[folds[[i]],], Theta.hat=cur.clime, diag(1,ncol(X)))$te})
     )
   }
-  
+
   te.ave<-colMeans(te)
   te.min<-which.min(te.ave)
   cat(te.ave,'\n')
   lam<-seq(0.3,1.2,length.out=10)[te.min]
-  
+
   lam
 }
 
 
 
 
-####FDR control function with input 
+####FDR control function with input
 ###z.abs: absolute value of z-scores; alpha: fdr level.
 BH.func<-function(z.abs,alpha, plot=F){
   M=length(z.abs)
@@ -295,7 +286,7 @@ BH.func<-function(z.abs,alpha, plot=F){
     plot(t.seq,fdr.est, type='l')
     abline(h=alpha, col='blue')
   }
-  
+
   if(is.na(t.hat)){
     t.hat<-sqrt(2*log(M))
   }
@@ -323,7 +314,7 @@ DB.clime.FDR<- function(Theta, X){
   for(i in 1:p){
     diag.est[i]<-as.numeric(2*Theta[i,i] - t(Theta[,i])%*%Sig.hat%*%Theta[,i])
   }
-  for( i in 1: (p-1)){  
+  for( i in 1: (p-1)){
     for(j in (i+1):p){
       db.est<-as.numeric(Theta[i,j] +Theta[j,i]- t(Theta[,i])%*%Sig.hat%*%Theta[,j])
       # db.sd<- sd((X%*%Theta[,i])*(X%*%Theta[,j]))/sqrt(n)
@@ -350,7 +341,7 @@ BH.func<-function(p.val0,alpha, plot=F){
     plot(t.seq,fdr.est, type='l')
     abline(h=alpha, col='blue')
   }
-  
+
   if(is.na(t.hat)){
     t.hat<-sqrt(2*log(M))
   }
@@ -369,7 +360,7 @@ jgl.fun<-function(X.all,n.vec, lam.const=NULL){
     ind.k<-(sum(n.vec[1:(k-1)])+1):(sum(n.vec[1:k]))
     X.list[[k]]<-X.all[ind.k,]
   }
-  
+
   #initalization
   Theta.init<-list()
   for(k in 1: K){
