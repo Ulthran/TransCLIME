@@ -1,5 +1,4 @@
 #generate the data for simulation
-
 DataGen<-function(K,A.size,h, n.vec,s=10, p=100,type='Toep', ntest=100){
 
   if(type=='Toep'){
@@ -112,13 +111,15 @@ test_that("everything works", {
   tl.pairs<-pval.tl[BH.func(pval.tl[,3], 0.1),1:2]
   otl.pairs<-pval.otl[BH.func(pval.otl[,3], 0.1),1:2]
 
-  c(sum(Theta0[cl.pairs]==0)/max(length(cl.pairs),1),
+  FDR.res <- c(sum(Theta0[cl.pairs]==0)/max(length(cl.pairs),1),
     sum(Theta0[otl.pairs]==0)/max(length(otl.pairs),1),
     sum(Theta0[tl.pairs]==0)/max(length(tl.pairs),1)) ###FDR result
 
-  c(sum(Theta0[cl.pairs]!=0)/sum(Theta0[pval.cl[,1:2]]!=0),
+  power.res <- c(sum(Theta0[cl.pairs]!=0)/sum(Theta0[pval.cl[,1:2]]!=0),
     sum(Theta0[otl.pairs]!=0)/sum(Theta0[pval.otl[,1:2]]!=0),
     sum(Theta0[tl.pairs]!=0)/sum(Theta0[pval.tl[,1:2]]!=0)) ###power result
 
+  print(FDR.res)
+  print(power.res)
   expect_equal(2 * 2, 4)
 })

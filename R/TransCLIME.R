@@ -192,9 +192,17 @@ ADMM_proj<-function(mat,
 
 }
 
-####the main Trans-CLIME algorithm###
-##X: primary data; X.A: {X^{(k)}, k in A}; lambda:lambda.Theta;
-### agg: perform LS aggregation or not; X.til: samples for aggregation; Theta.cl: CLIME estimator
+#' The main TransCLIME algorithm
+#'
+#' @param X is the primary data set
+#' @param X.A is {X^{(k)}, k in A
+#' @param agg is a boolean to perform LS aggregation or not (default: T)
+#' @param X.til is the sample set for aggregation (default: NULL)
+#' @param Theta.cl is the CLIME estimator
+#'
+#' @return is SOMETHING
+#'
+#' @export
 Trans.CLIME<-function(X,X.A, const, agg=T, X.til=NULL,Theta.cl){
   if(agg &is.null(X.til)){
     cat('no aggregation samples provided.','\n')
@@ -221,8 +229,12 @@ Trans.CLIME<-function(X,X.A, const, agg=T, X.til=NULL,Theta.cl){
   Omega.hat
 }
 
-####LS aggregation function with
-### Theta.init=(Omega.clime, Theta.hat) and X.til: some primary samples
+#' LS aggregation function
+#'
+#' @param Theta.init is a column-bound combination of Theta.cl and Theta.hat
+#' @param X.til is a subset of primary samples
+#'
+#' @return is SOMETHING
 Agg<-function(Theta.init, X.til){
   p<-ncol(X.til)
   n.til<-nrow(X.til)
@@ -268,12 +280,14 @@ cv.clime<-function(X, nfold=5){
   lam
 }
 
-
-
-
-####FDR control function with input
-###z.abs: absolute value of z-scores; alpha: fdr level.
+#' FDR control function with input
+#' @param z.abs is the absolute value of z-scores
+#' @param alpha is the fdr level
+#' @param plot is a boolean to plot the output or not (default: F)
+#'
+#' @return is an array of indices for which z.abs is gte t.hat
 BH.func<-function(z.abs,alpha, plot=F){
+  print("z.abs")
   M=length(z.abs)
   fdr.est<-NULL
   t.seq<-seq(0,sqrt(2*log(M)-2*log(log(M))),0.01)
@@ -294,7 +308,17 @@ BH.func<-function(z.abs,alpha, plot=F){
   which(z.abs >= t.hat)
 }
 
-###compute the estimation errors based on the test samples X.test
+#' Compute the estimation errors based on the test samples
+#'
+#' @param X.test is the set of test samples
+#' @param Theta.hat is SOMETHING
+#' @param Theta0 is SOMETHING
+#'
+#' @return is a named list containing \itemize{
+#' \item \code{Frob} is SOMETHING
+#' \item \code{S} is SOMETHING
+#' \item \code{te} is SOMETHING
+#' }
 Dist<- function(X.test, Theta.hat,Theta0){ ###compute the ell_2 error
   p<-ncol(Theta.hat)
   Theta.hat<-lavaSearch2:::symmetrize(Theta.hat, update.upper = TRUE)
@@ -304,7 +328,12 @@ Dist<- function(X.test, Theta.hat,Theta0){ ###compute the ell_2 error
   list(Frob=sum((Theta.hat-Theta0)^2)/p, S=max(abs(svd(Theta.hat-Theta0)$d))^2, te=te)
 }
 
-
+#' DB.clime.FDR is SOMETHING
+#'
+#' @param Theta is SOMETHING
+#' @param X is SOMETHING
+#'
+#' @return is SOMETHING
 DB.clime.FDR<- function(Theta, X){
   n<-nrow(X)
   p<-ncol(X)
@@ -328,6 +357,7 @@ DB.clime.FDR<- function(Theta, X){
 }
 
 BH.func<-function(p.val0,alpha, plot=F){
+  print("p.val0")
   M=length(p.val0)
   Z.w<-qnorm(1-p.val0/2)
   fdr.est<-NULL
@@ -349,11 +379,21 @@ BH.func<-function(p.val0,alpha, plot=F){
   which(Z.w >= t.hat)
 }
 
-
-
-#joint graph estimator Guo et al. (2011)
+#' Joint graph estimator function from Guo et al. (2011)
+#'
+#' @param X.all is SOMETHING
+#' @param n.vec is SOMETHING
+#' @param lam.const is SOMETHING (default: NULL)
+#'
+#' @return is a named list containing \itemize{
+#' \item \code{Theta.hat} is SOMETHING
+#' \item \code{lam.const} is SOMETHING
+#' }
+#'
+#' @seealso \url{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3412604/}
 jgl.fun<-function(X.all,n.vec, lam.const=NULL){
   K=length(n.vec)
+  p <- ncol(X.all) # ADDED: p didn't exist in this context, is this a good way to initialize it? No idea
   X.list<-list()
   X.list[[1]] <- X.all[1:n.vec[1],]
   for(k in 2:K){
@@ -361,7 +401,7 @@ jgl.fun<-function(X.all,n.vec, lam.const=NULL){
     X.list[[k]]<-X.all[ind.k,]
   }
 
-  #initalization
+  #initialization
   Theta.init<-list()
   for(k in 1: K){
     nu=2*sqrt(log(p)/n.vec[k])
