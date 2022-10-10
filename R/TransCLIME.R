@@ -129,10 +129,6 @@ l1proj<-function(v, b){
 #' \item \code{df_ADMM} dataframe containing parameters of the ADMM algorithm for each iteration of the algorithm
 #' }
 #'
-#' @examples
-#' M = matrix(-1,20,20)
-#' mat_proj <- ADMM_proj(mat=M)$mat
-#'
 #' @seealso \url{https://web.stanford.edu/~boyd/papers/pdf/admm_distr_stats.pdf}
 ADMM_proj<-function(mat,
                     epsilon=1e-4,
