@@ -9,6 +9,8 @@ BH.func(p.val0, alpha, plot = F)
 BH.func(p.val0, alpha, plot = F)
 }
 \arguments{
+\item{p.val0}{is the absolute value of z-scores}
+
 \item{alpha}{is the fdr level}
 
 \item{plot}{is a boolean to plot the output or not (default: F)}

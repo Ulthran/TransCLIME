@@ -1,10 +1,10 @@
-library(mvtnorm)
+#library(mvtnorm)
 library(fastclime)
-library(Matrix)
-library(glasso)#for joint graph estimator (Guo et al 2011)
-library(lavaSearch2) #only to symmetrize matrices
+#library(Matrix)
+library(glasso) # For joint graph estimator (Guo et al 2011)
+library(lavaSearch2) # Only to symmetrize matrices
 library(caret)
-#library(BDcocolasso) #admm for spd projection
+#library(BDcocolasso) # admm for spd projection
 
 #' Algorithm based on fastclime package
 #' min \|Theta\|_1
@@ -92,6 +92,10 @@ Spd.proj<-function(SigA.hat, eps=NULL){
 }
 
 #' Sourced from: https://rdrr.io/github/celiaescribe/BDcocolasso/src/R/ADMM_proj.R
+#' @param v is SOMETHING
+#' @param b is SOMETHING
+#'
+#' @return is SOMETHING
 l1proj<-function(v, b){
 
   # Efficient projection onto L1 ball of specified radius (i.e. b), used by the admm algo
@@ -127,7 +131,7 @@ l1proj<-function(v, b){
 #'
 #' @examples
 #' M = matrix(-1,20,20)
-#' mat_proj <- BDcocolasso::ADMM_proj(mat=M)$mat
+#' mat_proj <- ADMM_proj(mat=M)$mat
 #'
 #' @seealso \url{https://web.stanford.edu/~boyd/papers/pdf/admm_distr_stats.pdf}
 ADMM_proj<-function(mat,
@@ -201,6 +205,7 @@ ADMM_proj<-function(mat,
 #'
 #' @param X is the primary data set
 #' @param X.A is the set of X^{(k)} for k in A
+#' @param const is SOMETHING
 #' @param agg is a boolean to perform LS aggregation or not (default: T)
 #' @param X.til is the sample set for aggregation (default: NULL)
 #' @param Theta.cl is the CLIME estimator
@@ -374,7 +379,7 @@ DB.clime.FDR<- function(Theta, X){
 }
 
 #' FDR control function with input
-#' @param z.abs is the absolute value of z-scores
+#' @param p.val0 is the absolute value of z-scores
 #' @param alpha is the fdr level
 #' @param plot is a boolean to plot the output or not (default: F)
 #'
@@ -383,7 +388,7 @@ DB.clime.FDR<- function(Theta, X){
 #' @importFrom graphics abline
 #' @importFrom stats pnorm
 #' @importFrom stats qnorm
-BH.func<-function(p.val0,alpha, plot=F){
+BH.func<-function(p.val0, alpha, plot=F){
   print("p.val0")
   M=length(p.val0)
   Z.w<-qnorm(1-p.val0/2)

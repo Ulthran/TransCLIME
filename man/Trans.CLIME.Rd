@@ -11,6 +11,8 @@ Trans.CLIME(X, X.A, const, agg = T, X.til = NULL, Theta.cl)
 
 \item{X.A}{is the set of X^{(k)} for k in A}
 
+\item{const}{is SOMETHING}
+
 \item{agg}{is a boolean to perform LS aggregation or not (default: T)}
 
 \item{X.til}{is the sample set for aggregation (default: NULL)}

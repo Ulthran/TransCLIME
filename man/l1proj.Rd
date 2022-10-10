@@ -6,6 +6,14 @@
 \usage{
 l1proj(v, b)
 }
+\arguments{
+\item{v}{is SOMETHING}
+
+\item{b}{is SOMETHING}
+}
+\value{
+is SOMETHING
+}
 \description{
 Sourced from: https://rdrr.io/github/celiaescribe/BDcocolasso/src/R/ADMM_proj.R
 }

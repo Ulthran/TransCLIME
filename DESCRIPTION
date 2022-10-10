@@ -17,6 +17,4 @@ Imports:
     caret,
     fastclime,
     glasso,
-    lavaSearch2,
-    Matrix,
-    mvtnorm
+    lavaSearch2
