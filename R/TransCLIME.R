@@ -195,7 +195,7 @@ ADMM_proj<-function(mat,
 #' The main TransCLIME algorithm
 #'
 #' @param X is the primary data set
-#' @param X.A is {X^{(k)}, k in A
+#' @param X.A is the set of X^{(k)} for k in A
 #' @param agg is a boolean to perform LS aggregation or not (default: T)
 #' @param X.til is the sample set for aggregation (default: NULL)
 #' @param Theta.cl is the CLIME estimator
