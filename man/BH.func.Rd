@@ -5,6 +5,8 @@
 \title{FDR control function with input}
 \usage{
 BH.func(p.val0, alpha, plot = F)
+
+BH.func(p.val0, alpha, plot = F)
 }
 \arguments{
 \item{alpha}{is the fdr level}
@@ -15,7 +17,11 @@ BH.func(p.val0, alpha, plot = F)
 }
 \value{
 is an array of indices for which z.abs is gte t.hat
+
+is an array of indices for which z.abs is gte t.hat
 }
 \description{
+FDR control function with input
+
 FDR control function with input
 }

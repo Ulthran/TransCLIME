@@ -3,6 +3,7 @@ library(fastclime)
 library(Matrix)
 library(glasso)#for joint graph estimator (Guo et al 2011)
 library(lavaSearch2) #only to symmetrize matrices
+library(caret)
 #library(BDcocolasso) #admm for spd projection
 
 #' Algorithm based on fastclime package
@@ -20,6 +21,10 @@ library(lavaSearch2) #only to symmetrize matrices
 #' \item \code{Theta.hat} SOMETHING
 #' \item \code{conv} SOMETHING
 #' }
+#'
+#' @importFrom stats cov
+#' @importFrom stats cov2cor
+#' @importFrom utils capture.output
 Myfastclime.s<-function(X,Bmat,lambda=0.1, scale=T, n){
   p<-ncol(X)
   obj=rep(-1,2*p)
@@ -203,6 +208,9 @@ ADMM_proj<-function(mat,
 #' @return is SOMETHING
 #'
 #' @export
+#'
+#' @importFrom stats cov
+#' @importFrom stats sd
 Trans.CLIME<-function(X,X.A, const, agg=T, X.til=NULL,Theta.cl){
   if(agg &is.null(X.til)){
     cat('no aggregation samples provided.','\n')
@@ -235,6 +243,8 @@ Trans.CLIME<-function(X,X.A, const, agg=T, X.til=NULL,Theta.cl){
 #' @param X.til is a subset of primary samples
 #'
 #' @return is SOMETHING
+#'
+#' @importFrom stats cov
 Agg<-function(Theta.init, X.til){
   p<-ncol(X.til)
   n.til<-nrow(X.til)
@@ -261,7 +271,6 @@ Agg<-function(Theta.init, X.til){
 #' @importFrom caret createFolds
 cv.clime<-function(X, nfold=5){
   p<-ncol(X)
-  library(caret)
   folds<-caret::createFolds(1:nrow(X), k=nfold)
   te<-NULL
   lam.seq<-seq(0.3,1.2,length.out=10)*2*sqrt(log(p)/nrow(X)*nfold/(nfold-1))
@@ -286,6 +295,9 @@ cv.clime<-function(X, nfold=5){
 #' @param plot is a boolean to plot the output or not (default: F)
 #'
 #' @return is an array of indices for which z.abs is gte t.hat
+#'
+#' @importFrom graphics abline
+#' @importFrom stats pnorm
 BH.func<-function(z.abs,alpha, plot=F){
   print("z.abs")
   M=length(z.abs)
@@ -319,6 +331,8 @@ BH.func<-function(z.abs,alpha, plot=F){
 #' \item \code{S} is SOMETHING
 #' \item \code{te} is SOMETHING
 #' }
+#'
+#' @importFrom stats cov
 Dist<- function(X.test, Theta.hat,Theta0){ ###compute the ell_2 error
   p<-ncol(Theta.hat)
   Theta.hat<-lavaSearch2:::symmetrize(Theta.hat, update.upper = TRUE)
@@ -334,6 +348,9 @@ Dist<- function(X.test, Theta.hat,Theta0){ ###compute the ell_2 error
 #' @param X is SOMETHING
 #'
 #' @return is SOMETHING
+#'
+#' @importFrom stats cov
+#' @importFrom stats pnorm
 DB.clime.FDR<- function(Theta, X){
   n<-nrow(X)
   p<-ncol(X)
@@ -356,6 +373,16 @@ DB.clime.FDR<- function(Theta, X){
   pval.all
 }
 
+#' FDR control function with input
+#' @param z.abs is the absolute value of z-scores
+#' @param alpha is the fdr level
+#' @param plot is a boolean to plot the output or not (default: F)
+#'
+#' @return is an array of indices for which z.abs is gte t.hat
+#'
+#' @importFrom graphics abline
+#' @importFrom stats pnorm
+#' @importFrom stats qnorm
 BH.func<-function(p.val0,alpha, plot=F){
   print("p.val0")
   M=length(p.val0)
@@ -389,6 +416,8 @@ BH.func<-function(p.val0,alpha, plot=F){
 #' \item \code{Theta.hat} is SOMETHING
 #' \item \code{lam.const} is SOMETHING
 #' }
+#'
+#' @importFrom stats cov
 #'
 #' @seealso \url{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3412604/}
 jgl.fun<-function(X.all,n.vec, lam.const=NULL){
