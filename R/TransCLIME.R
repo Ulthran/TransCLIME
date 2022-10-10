@@ -44,7 +44,7 @@ Myfastclime.s<-function(X,Bmat,lambda=0.1, scale=T, n){
               cbind(-Sig.hat,Sig.hat))
   for(j in 1:p){
     rhs <- c(Bmat[,j],-Bmat[,j])
-    out.txt<-capture.output(  fastlp.re<-fastlp(obj=obj, mat=mat, rhs=rhs+rhs_bar*lambda))
+    out.txt<-capture.output(  fastlp.re<-fastclime::fastlp(obj=obj, mat=mat, rhs=rhs+rhs_bar*lambda))
     if(!grepl("optimal", out.txt) ){
         feasible=F
         break
@@ -447,7 +447,7 @@ jgl.fun<-function(X.all,n.vec, lam.const=NULL){
       bic.cur<-0
       Theta.hat<-list()
       for(k in 1: K){
-        Theta.re<-glasso(cov(X.list[[k]]), rho=const*2*sqrt(log(p)/n.vec[k])*weight, wi.init=Theta.init[[k]], maxit=100)
+        Theta.re<-glasso::glasso(cov(X.list[[k]]), rho=const*2*sqrt(log(p)/n.vec[k])*weight, wi.init=Theta.init[[k]], maxit=100)
         Theta.hat[[k]]<-Theta.re$wi
         bic.cur <- bic.cur+Dist(X.test=X.list[[k]], Theta.hat[[k]], diag(1,p))$te+log(n.vec[k])*sum(Theta.hat[[k]]!=0)/2/n.vec[k]
       }
@@ -460,7 +460,7 @@ jgl.fun<-function(X.all,n.vec, lam.const=NULL){
   Theta.hat<-list()
   for(tt in 1:10){
     for(k in 1: K){
-      Theta.re<-glasso(cov(X.list[[k]]), rho=lam.const*2*sqrt(log(p)/n.vec[k])*weight, wi.init=Theta.init[[k]], maxit=100)
+      Theta.re<-glasso::glasso(cov(X.list[[k]]), rho=lam.const*2*sqrt(log(p)/n.vec[k])*weight, wi.init=Theta.init[[k]], maxit=100)
       Theta.hat[[k]]<-Theta.re$wi
     }
     cat('tt=',tt,max(abs(Theta.hat[[1]]-Theta.init[[1]])),'\n')
