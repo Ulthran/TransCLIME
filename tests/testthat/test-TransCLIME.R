@@ -23,7 +23,7 @@ DataGen<-function(K,A.size,h, n.vec,s=10, p=100,type='Toep', ntest=100){
     Theta<-diag(max(0.1-min(eigen(Theta)$values),0),p)+Theta
   }
   Sig<- solve(Theta)
-  X<-rmvnorm(n.vec[1],rep(0,p), sigma=Sig)
+  X<-mvtnorm::rmvnorm(n.vec[1],rep(0,p), sigma=Sig)
   Theta.out<-diag(1,p)
   Omega.vec<-0
   for(k in 1 : K){
@@ -35,7 +35,7 @@ DataGen<-function(K,A.size,h, n.vec,s=10, p=100,type='Toep', ntest=100){
       if(min(eigen(Sig.k)$values)<0.05){
         Sig.k<-Sig.k+diag(0.1-min(eigen(Sig.k)$values),p)
       }
-      X<- rbind(X, rmvnorm(n.vec[k+1],rep(0,p), sigma=Sig.k))
+      X<- rbind(X, mvtnorm::rmvnorm(n.vec[k+1],rep(0,p), sigma=Sig.k))
     }else{
       #Delta.out<-diag(0.5,p)+matrix(rbinom(p^2,size=1,prob=0.4)*runif(p^2,-0.2,0.2),ncol=p)
       Delta.out<-diag(1,p)+matrix(rbinom(p^2,size=1,prob=0.1)*0.4,ncol=p)
@@ -44,13 +44,13 @@ DataGen<-function(K,A.size,h, n.vec,s=10, p=100,type='Toep', ntest=100){
       if(min(eigen(Sig.k)$values)<0.05){
         Sig.k<-Sig.k+diag(0.1-min(eigen(Sig.k)$values),p)
       }
-      X<- rbind(X, rmvnorm(n.vec[k+1],rep(0,p), sigma=Sig.k))
+      X<- rbind(X, mvtnorm::rmvnorm(n.vec[k+1],rep(0,p), sigma=Sig.k))
     }
     Omega.vec<-c(Omega.vec, max(colSums(abs(diag(1,p)-Sig.k%*%Theta))))
 
   }
   cat(Omega.vec,'\n')
-  list(X=X, Theta0=Theta, X.test=rmvnorm(ntest,rep(0,p), sigma=Sig), Omega.l1=max(Omega.vec))
+  list(X=X, Theta0=Theta, X.test=mvtnorm::rmvnorm(ntest,rep(0,p), sigma=Sig), Omega.l1=max(Omega.vec))
 
 }
 
