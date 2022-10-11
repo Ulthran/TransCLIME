@@ -1,4 +1,4 @@
-#library(mvtnorm)
+library(mvtnorm)
 
 #generate the data for simulation
 DataGen<-function(K,A.size,h, n.vec,s=10, p=100,type='Toep', ntest=100){
