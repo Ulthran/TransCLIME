@@ -290,37 +290,6 @@ cv.clime<-function(X, nfold=5){
   lam
 }
 
-#' FDR control function with input
-#' @param z.abs is the absolute value of z-scores
-#' @param alpha is the fdr level
-#' @param plot is a boolean to plot the output or not (default: F)
-#'
-#' @return is an array of indices for which z.abs is gte t.hat
-#'
-#' @importFrom graphics abline
-#' @importFrom stats pnorm
-BH.func<-function(z.abs,alpha, plot=F){
-  print("z.abs")
-  M=length(z.abs)
-  fdr.est<-NULL
-  t.seq<-seq(0,sqrt(2*log(M)-2*log(log(M))),0.01)
-  for(t in t.seq){
-    fdr.est<-c(fdr.est,M*2*(1-pnorm(t))/max(sum(z.abs>= t),1))
-  }
-  t.hat<-NULL
-  t.hat<- t.seq[which(fdr.est<=alpha)[1]]
-  if(plot){
-    plot(t.seq,fdr.est, type='l')
-    abline(h=alpha, col='blue')
-  }
-
-  if(is.na(t.hat)){
-    t.hat<-sqrt(2*log(M))
-  }
-  #cat(t.hat, which(Z.w > t.hat),'\n')
-  which(z.abs >= t.hat)
-}
-
 #' Compute the estimation errors based on the test samples
 #'
 #' @param X.test is the set of test samples
