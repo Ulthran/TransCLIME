@@ -5,8 +5,6 @@
 \title{FDR control function with input}
 \usage{
 BH.func(p.val0, alpha, plot = F)
-
-BH.func(p.val0, alpha, plot = F)
 }
 \arguments{
 \item{p.val0}{is the absolute value of z-scores}
@@ -14,16 +12,10 @@ BH.func(p.val0, alpha, plot = F)
 \item{alpha}{is the fdr level}
 
 \item{plot}{is a boolean to plot the output or not (default: F)}
-
-\item{z.abs}{is the absolute value of z-scores}
 }
 \value{
 is an array of indices for which z.abs is gte t.hat
-
-is an array of indices for which z.abs is gte t.hat
 }
 \description{
-FDR control function with input
-
 FDR control function with input
 }
