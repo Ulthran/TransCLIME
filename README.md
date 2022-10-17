@@ -7,7 +7,6 @@
 
 Transfer learning in high-dimensional graphical models with false discovery rate control.
 
+Documentation: https://ulthran.github.io/TransCLIME/
 
-Main R functions are in "CLIME-opt.R"
-
-An example is given in "Example-Trans-CLIME.R"
+The paper, Transfer Learning in Large-scale Gaussian Graphical Models with False Discovery Rate Control, can be found at https://arxiv.org/abs/2010.11037.
