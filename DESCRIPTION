@@ -1,10 +1,15 @@
 Package: TransCLIME
-Title: What the Package Does (One Line, Title Case)
+Title: Transfer Learning in High-Dimensional Graphical Models with False Discovery Rate Control
 Version: 0.0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+    c(
+      person("Sai", "Li", , "sai.li@pennmedicine.upenn.edu", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-6362-3593")),
+      person("Tony", "Cai", , "tcai@wharton.upenn.edu", role = "aut", comment = c(ORCID = "0000-0002-1673-6296")),
+      person("Hongzhe", "Li", , "hongzhe@pennmedicine.upenn.edu", role = "aut", comment = c(ORCID = "0000-0003-3662-3907"))
+    )
+Description: Transfer learning for high-dimensional Gaussian graphical models (GGMs) is studied with the goal of estimating the target GGM by utilizing the data from similar and related auxiliary studies. The similarity between the target graph and each auxiliary graph is characterized by the sparsity of a divergence matrix. An estimation algorithm, Trans-CLIME, is proposed and shown to attain a faster convergence rate than the minimax rate in the single study setting. Furthermore, a debiased Trans-CLIME estimator is introduced and shown to be element-wise asymptotically normal. It is used to construct a multiple testing procedure for edge detection with false discovery rate control.
+URL: https://ulthran.github.io/TransCLIME, https://github.com/Ulthran/TransCLIME
+BugReports: ISSUESLINKONCEREPONOTFORKED
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

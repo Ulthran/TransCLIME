@@ -212,7 +212,7 @@ ADMM_proj<-function(mat,
 #'
 #' @importFrom stats cov
 #' @importFrom stats sd
-Trans.CLIME<-function(X,X.A, const, agg=T, X.til=NULL,Theta.cl){
+Trans.CLIME<-function(X, X.A, const, agg=T, X.til=NULL, Theta.cl){
   if(agg &is.null(X.til)){
     cat('no aggregation samples provided.','\n')
   }
