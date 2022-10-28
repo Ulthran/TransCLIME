@@ -6,11 +6,6 @@ citEntry(
   author   = "Sai Li, T. Tony Cai, Hongzhe Li",
   journal  = "Journal of the American Statistical Association",
   year     = "2022",
-  volume   = ,
-  number   = ,
-  pages    = ,
   url      = "https://doi.org/10.1080/01621459.2022.2044333",
-  textVersion = paste(
-
-  )
+  textVersion = "Li S, Cai TT and Li H (2022): Transfer Learning in Large-scale Gaussian Graphical Models with False Discovery Rate Control. Journal of American Statistical Association, accepted."
 )
