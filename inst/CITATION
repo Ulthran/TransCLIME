@@ -1,0 +1,16 @@
+citHeader("To cite TransCLIME in publications use:")
+
+citEntry(
+  entry    = "Article",
+  title    = "Transfer Learning in Large-Scale Gaussian Graphical Models with False Discovery Rate Control",
+  author   = "Sai Li, T. Tony Cai, Hongzhe Li",
+  journal  = "Journal of the American Statistical Association",
+  year     = "2022",
+  volume   = ,
+  number   = ,
+  pages    = ,
+  url      = "https://doi.org/10.1080/01621459.2022.2044333",
+  textVersion = paste(
+
+  )
+)
