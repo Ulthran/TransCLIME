@@ -17,6 +17,7 @@ RoxygenNote: 7.2.1
 Suggests: 
     covr,
     knitr,
+    mvtnorm,
     rmarkdown,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
@@ -24,6 +25,5 @@ Imports:
     caret,
     fastclime,
     glasso,
-    lavaSearch2,
-    mvtnorm
+    lavaSearch2
 VignetteBuilder: knitr

@@ -22,46 +22,47 @@ library(caret)
 #' \item \code{conv} SOMETHING
 #' }
 #'
+#' @export
+#'
 #' @importFrom stats cov
 #' @importFrom stats cov2cor
 #' @importFrom utils capture.output
-Myfastclime.s<-function(X,Bmat,lambda=0.1, scale=T, n){
-  p<-ncol(X)
-  obj=rep(-1,2*p)
-  obj_bar=rep(0,2*p)
-  rhs_bar<-rep(1, 2*p)
-  if(isSymmetric(X, tol=10^(-4))){
-    Sig.hat<-X
-  }else{
-    Sig.hat<-cov(X)
+Myfastclime.s <- function(X, Bmat, lambda=0.1, scale=T){
+  p <- ncol(X)
+  obj <- rep(-1, 2*p)
+  obj_bar <- rep(0, 2*p)
+  rhs_bar <- rep(1, 2*p)
+  if(isSymmetric(X, tol=10^(-4))) {
+    Sig.hat <- X
+  } else {
+    Sig.hat <- cov(X)
   }
-  Sig.hat0<-Sig.hat
-  feasible=T
-  Theta.hat<-NULL
-  Sig.diag<-diag(Sig.hat)
-  Sig.hat<-cov2cor(Sig.hat)
-  mat=rbind(cbind(Sig.hat,-Sig.hat),
-              cbind(-Sig.hat,Sig.hat))
-  for(j in 1:p){
-    rhs <- c(Bmat[,j],-Bmat[,j])
-    out.txt<-capture.output(  fastlp.re<-fastclime::fastlp(obj=obj, mat=mat, rhs=rhs+rhs_bar*lambda))
-    if(!grepl("optimal", out.txt) ){
-        feasible=F
+  Sig.hat0 <- Sig.hat
+  feasible <- T
+  Theta.hat <- NULL
+  Sig.diag <- diag(Sig.hat)
+  Sig.hat <- cov2cor(Sig.hat)
+  mat <- rbind(cbind(Sig.hat, -Sig.hat),
+              cbind(-Sig.hat, Sig.hat))
+  for(j in 1:p) {
+    rhs <- c(Bmat[,j], -Bmat[,j])
+    out.txt <- capture.output(fastlp.re <- fastclime::fastlp(obj=obj, mat=mat, rhs=rhs+rhs_bar*lambda))
+    if(!grepl("optimal", out.txt) ) {
+        feasible <- F
         break
     }
-    Theta.hat<-cbind(Theta.hat,(fastlp.re[1:p]-fastlp.re[-(1:p)])/sqrt(Sig.diag[j])/sqrt(Sig.diag))
-    if(scale & sum(Theta.hat[,j]==0)==p){
-      feasible=F
+    Theta.hat <- cbind(Theta.hat, (fastlp.re[1:p] - fastlp.re[-(1:p)]) / sqrt(Sig.diag[j]) / sqrt(Sig.diag))
+    if(scale & sum(Theta.hat[,j] == 0) == p) {
+      feasible <- F
       break
-    }else if(scale){
-      Theta.hat[,j]<-  as.numeric(Bmat[j,j]/ (Sig.hat0[j,]%*%Theta.hat[,j]))*Theta.hat[,j]
-     # Theta.hat[,j]<-as.numeric(Theta.hat[j,j]/ (t(Theta.hat[,j])%*%Sig.hat0%*%Theta.hat[,j]))*Theta.hat[,j]
-
+    } else if(scale) {
+      Theta.hat[,j] <- as.numeric(Bmat[j,j] / (Sig.hat0[j,] %*% Theta.hat[,j])) * Theta.hat[,j]
+     #Theta.hat[,j]<-as.numeric(Theta.hat[j,j]/ (t(Theta.hat[,j])%*%Sig.hat0%*%Theta.hat[,j]))*Theta.hat[,j]
     }
   }
-  if(!feasible){
+  if(!feasible) {
     cat('Theta.hat not found','\n')
-    Theta.hat<-solve(cov(X)+diag(lambda,p))%*%Bmat
+    Theta.hat <- solve(cov(X) + diag(lambda,p)) %*% Bmat
   }
   list(Theta.hat=Theta.hat, conv=feasible)
 }
@@ -76,18 +77,18 @@ Myfastclime.s<-function(X,Bmat,lambda=0.1, scale=T, n){
 #' \item \code{mat} SOMETHING
 #' \item \code{conv} SOMETHING
 #' }
-Spd.proj<-function(SigA.hat, eps=NULL){
-  p=ncol(SigA.hat)
-  if(is.null(eps)){
-    eps<-5/p
+Spd.proj <- function(SigA.hat, eps=NULL) {
+  p <- ncol(SigA.hat)
+  if(is.null(eps)) {
+    eps <- 5/p
   }
-  feasible=1
-  SigA.t<-SigA.hat
-   if(min(eigen(SigA.t)$values) <=eps ){
-     feasible=2
-     SigA.t<-ADMM_proj(SigA.hat, epsilon=eps)$mat
+  feasible <- 1
+  SigA.t <- SigA.hat
+   if(min(eigen(SigA.t)$values) <= eps) {
+     feasible <- 2
+     SigA.t <- ADMM_proj(SigA.hat, epsilon=eps)$mat
    }
-  SigA.t<-lavaSearch2:::symmetrize(SigA.t, update.upper = TRUE)
+  SigA.t <- lavaSearch2:::symmetrize(SigA.t, update.upper=TRUE)
   list(mat=SigA.t, conv=feasible)
 }
 
@@ -212,28 +213,32 @@ ADMM_proj<-function(mat,
 #'
 #' @importFrom stats cov
 #' @importFrom stats sd
-Trans.CLIME<-function(X, X.A, const, agg=T, X.til=NULL, Theta.cl){
-  if(agg &is.null(X.til)){
-    cat('no aggregation samples provided.','\n')
+Trans.CLIME <- function(X, X.A, const, agg=T, X.til=NULL, Theta.cl) {
+  if(agg & is.null(X.til)) {
+    cat('no aggregation samples provided.', '\n')
   }
-  n0=nrow(X)
-  nA<-nrow(X.A)
-  p<-ncol(X)
-  sigA.hat<-mean(apply(X.A, 2, sd))
-  sig0.hat<-mean(apply(X, 2, sd))
+  n0 <- nrow(X)
+  nA <- nrow(X.A)
+  p <- ncol(X)
+  sigA.hat <- mean(apply(X.A, 2, sd))
+  sig0.hat <- mean(apply(X, 2, sd))
 
-  lam.delta<-2*sig0.hat*sqrt(log(p)/n0)
-  omega.l1<-mean(apply(Theta.cl,2, function(x) sum(abs(x))))
-  Delta.re <- Myfastclime.s(X=diag(1,p), Bmat=diag(1,p)-t(Theta.cl)%*%cov(X.A), lambda=omega.l1*sqrt(log(p)/n0) , scale=F)
-  if(Delta.re$conv){Delta.hat<-Delta.re$Theta.hat}else{ Delta.hat<-diag(0,p) }
-  Theta.re <- Myfastclime.s(X=cov(X.A), Bmat=diag(1,p)-t(Delta.hat),
+  lam.delta <- 2 * sig0.hat * sqrt(log(p)/n0)
+  omega.l1 <- mean(apply(Theta.cl, 2, function(x) sum(abs(x))))
+  Delta.re <- Myfastclime.s(X=diag(1, p), Bmat=diag(1,p) - t(Theta.cl) %*% cov(X.A), lambda=omega.l1 * sqrt(log(p)/n0), scale=F)
+  if(Delta.re$conv) {
+    Delta.hat <- Delta.re$Theta.hat
+  } else {
+    Delta.hat <- diag(0, p)
+  }
+  Theta.re <- Myfastclime.s(X=cov(X.A), Bmat=diag(1, p) - t(Delta.hat),
                             lambda=2*const*sqrt(log(p)/nA))
-  Theta.hat<-Theta.re$Theta.hat
+  Theta.hat <- Theta.re$Theta.hat
 
-  if(agg){
+  if(agg) {
     Omega.hat<-Agg(Theta.init=cbind(Theta.cl, Theta.hat), X.til=X.til)
-  }else{
-    Omega.hat<-Theta.hat
+  } else {
+    Omega.hat <- Theta.hat
   }
   Omega.hat
 }
@@ -246,16 +251,16 @@ Trans.CLIME<-function(X, X.A, const, agg=T, X.til=NULL, Theta.cl){
 #' @return is SOMETHING
 #'
 #' @importFrom stats cov
-Agg<-function(Theta.init, X.til){
-  p<-ncol(X.til)
-  n.til<-nrow(X.til)
-  v.mat<-sapply(1:p, function(j){
-    W.j<-cov(X.til%*%cbind(Theta.init[,j], Theta.init[,p+j]))
-    v0=rep(0,2)
-    v0[which.min(c(W.j[1,1]-2*Theta.init[j,j], W.j[2,2]-2*Theta.init[j,p+j]))]<-1
+Agg <- function(Theta.init, X.til) {
+  p <- ncol(X.til)
+  n.til <- nrow(X.til)
+  v.mat <- sapply(1:p, function(j) {
+    W.j <- cov(X.til %*% cbind(Theta.init[,j], Theta.init[,p+j]))
+    v0 <- rep(0, 2)
+    v0[which.min(c(W.j[1,1]-2*Theta.init[j,j], W.j[2,2]-2*Theta.init[j,p+j]))] <- 1
     v0
   })
-  Theta.hat<-sapply(1:p, function(j) cbind(Theta.init[,j], Theta.init[,p+j])%*% v.mat[,j])
+  Theta.hat <- sapply(1:p, function(j) cbind(Theta.init[,j], Theta.init[,p+j]) %*% v.mat[,j])
 
   Theta.hat
 }
@@ -270,27 +275,27 @@ Agg<-function(Theta.init, X.til){
 #' @return is SOMETHING
 #'
 #' @importFrom caret createFolds
-cv.clime<-function(X, nfold=5){
-  p<-ncol(X)
-  folds<-caret::createFolds(1:nrow(X), k=nfold)
-  te<-NULL
-  lam.seq<-seq(0.3,1.2,length.out=10)*2*sqrt(log(p)/nrow(X)*nfold/(nfold-1))
-  for(i in 1:nfold){
-    te<-rbind(te,sapply(lam.seq, function(lam){
-      cur.clime<-Myfastclime.s(X=X[-folds[[i]],], Bmat=diag(1,p), lambda=lam)$Theta.hat
+cv.clime <- function(X, nfold=5) {
+  p <- ncol(X)
+  folds <- caret::createFolds(1:nrow(X), k=nfold)
+  te <- NULL
+  lam.seq <- seq(0.3, 1.2, length.out=10) * 2 * sqrt(log(p)/nrow(X) * nfold/(nfold-1))
+  for(i in 1:nfold) {
+    te <- rbind(te, sapply(lam.seq, function(lam) {
+      cur.clime <- Myfastclime.s(X=X[-folds[[i]],], Bmat=diag(1,p), lambda=lam)$Theta.hat
       Dist(X.test=X[folds[[i]],], Theta.hat=cur.clime, diag(1,ncol(X)))$te})
     )
   }
 
-  te.ave<-colMeans(te)
-  te.min<-which.min(te.ave)
-  cat(te.ave,'\n')
-  lam<-seq(0.3,1.2,length.out=10)[te.min]
+  te.ave <- colMeans(te)
+  te.min <- which.min(te.ave)
+  cat(te.ave, '\n')
+  lam <- seq(0.3, 1.2, length.out=10)[te.min]
 
   lam
 }
 
-#' Compute the estimation errors based on the test samples
+#' Compute the ell_2 estimation errors based on the test samples
 #'
 #' @param X.test is the set of test samples
 #' @param Theta.hat is SOMETHING
@@ -303,12 +308,12 @@ cv.clime<-function(X, nfold=5){
 #' }
 #'
 #' @importFrom stats cov
-Dist<- function(X.test, Theta.hat,Theta0){ ###compute the ell_2 error
-  p<-ncol(Theta.hat)
-  Theta.hat<-lavaSearch2:::symmetrize(Theta.hat, update.upper = TRUE)
-  Theta<-Spd.proj(SigA.hat=Theta.hat, eps=0.001)$mat
-  eigens<-eigen(Theta)$values
-  te=sum(diag(cov(X.test)%*%Theta))/2-sum(log(eigens[eigens>0]))/2
+Dist <- function(X.test, Theta.hat,Theta0) {
+  p <- ncol(Theta.hat)
+  Theta.hat <- lavaSearch2:::symmetrize(Theta.hat, update.upper = TRUE)
+  Theta <- Spd.proj(SigA.hat=Theta.hat, eps=0.001)$mat
+  eigens <- eigen(Theta)$values
+  te = sum(diag(cov(X.test) %*% Theta))/2 - sum(log(eigens[eigens>0]))/2
   list(Frob=sum((Theta.hat-Theta0)^2)/p, S=max(abs(svd(Theta.hat-Theta0)$d))^2, te=te)
 }
 
@@ -321,23 +326,23 @@ Dist<- function(X.test, Theta.hat,Theta0){ ###compute the ell_2 error
 #'
 #' @importFrom stats cov
 #' @importFrom stats pnorm
-DB.clime.FDR<- function(Theta, X){
-  n<-nrow(X)
-  p<-ncol(X)
-  Sig.hat<-cov(X)
-  pval.all<-NULL
-  diag.est<-rep(0,p)
-  for(i in 1:p){
-    diag.est[i]<-as.numeric(2*Theta[i,i] - t(Theta[,i])%*%Sig.hat%*%Theta[,i])
+DB.clime.FDR <- function(Theta, X) {
+  n <- nrow(X)
+  p <- ncol(X)
+  Sig.hat <- cov(X)
+  pval.all <- NULL
+  diag.est <- rep(0,p)
+  for(i in 1:p) {
+    diag.est[i] <- as.numeric(2*Theta[i,i] - t(Theta[,i])%*%Sig.hat%*%Theta[,i])
   }
-  for( i in 1: (p-1)){
-    for(j in (i+1):p){
-      db.est<-as.numeric(Theta[i,j] +Theta[j,i]- t(Theta[,i])%*%Sig.hat%*%Theta[,j])
+  for( i in 1: (p-1)) {
+    for(j in (i+1):p) {
+      db.est <- as.numeric(Theta[i,j]+Theta[j,i]-t(Theta[,i])%*%Sig.hat%*%Theta[,j])
       # db.sd<- sd((X%*%Theta[,i])*(X%*%Theta[,j]))/sqrt(n)
       #db.sd<-sqrt(diag.est[i]*diag.est[j]+db.est^2)/sqrt(n)
-      db.sd<-sqrt(Theta[i,i]*Theta[j,j]+Theta[i,j]^2)/sqrt(n)
-      pval.ij<-2*(1-pnorm(abs(db.est/db.sd)))
-      pval.all<-rbind(pval.all, c(i,j,pval.ij, db.est/db.sd))
+      db.sd <- sqrt(Theta[i,i]*Theta[j,j]+Theta[i,j]^2)/sqrt(n)
+      pval.ij <- 2*(1-pnorm(abs(db.est/db.sd)))
+      pval.all <- rbind(pval.all, c(i,j,pval.ij, db.est/db.sd))
     }
   }
   pval.all
@@ -353,26 +358,26 @@ DB.clime.FDR<- function(Theta, X){
 #' @importFrom graphics abline
 #' @importFrom stats pnorm
 #' @importFrom stats qnorm
-BH.func<-function(p.val0, alpha, plot=F){
+BH.func <- function(p.val0, alpha, plot=F) {
   print("p.val0")
-  M=length(p.val0)
-  Z.w<-qnorm(1-p.val0/2)
-  fdr.est<-NULL
-  t.seq<-seq(0,sqrt(2*log(M)-2*log(log(M))),0.01)
-  for(t in t.seq){
-    fdr.est<-c(fdr.est,M*2*(1-pnorm(t))/max(sum(Z.w>= t),1))
+  M = length(p.val0)
+  Z.w <- qnorm(1-p.val0/2)
+  fdr.est <- NULL
+  t.seq <- seq(0, sqrt(2*log(M)-2*log(log(M))), 0.01)
+  for(t in t.seq) {
+    fdr.est <- c(fdr.est, M*2*(1-pnorm(t))/max(sum(Z.w>= t), 1))
   }
-  t.hat<-NULL
-  t.hat<- t.seq[which(fdr.est<=alpha)[1]]
-  if(plot){
-    plot(t.seq,fdr.est, type='l')
+  t.hat <- NULL
+  t.hat <- t.seq[which(fdr.est<=alpha)[1]]
+  if(plot) {
+    plot(t.seq, fdr.est, type='l')
     abline(h=alpha, col='blue')
   }
 
-  if(is.na(t.hat)){
-    t.hat<-sqrt(2*log(M))
+  if(is.na(t.hat)) {
+    t.hat <- sqrt(2*log(M))
   }
-  #cat(t.hat, which(Z.w > t.hat),'\n')
+  #cat(t.hat, which(Z.w > t.hat), '\n')
   which(Z.w >= t.hat)
 }
 
@@ -390,58 +395,58 @@ BH.func<-function(p.val0, alpha, plot=F){
 #' @importFrom stats cov
 #'
 #' @seealso \url{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3412604/}
-jgl.fun<-function(X.all,n.vec, lam.const=NULL){
-  K=length(n.vec)
+jgl.fun <- function(X.all, n.vec, lam.const=NULL) {
+  K = length(n.vec)
   p <- ncol(X.all) # ADDED: p didn't exist in this context, is this a good way to initialize it? No idea
-  X.list<-list()
+  X.list <- list()
   X.list[[1]] <- X.all[1:n.vec[1],]
-  for(k in 2:K){
-    ind.k<-(sum(n.vec[1:(k-1)])+1):(sum(n.vec[1:k]))
-    X.list[[k]]<-X.all[ind.k,]
+  for(k in 2:K) {
+    ind.k <- (sum(n.vec[1:(k-1)])+1):(sum(n.vec[1:k]))
+    X.list[[k]] <- X.all[ind.k,]
   }
 
   #initialization
-  Theta.init<-list()
-  for(k in 1: K){
-    nu=2*sqrt(log(p)/n.vec[k])
-    Theta.init[[k]]<-solve(cov(X.list[[k]])+diag(nu,p))
+  Theta.init <- list()
+  for(k in 1: K) {
+    nu = 2*sqrt(log(p)/n.vec[k])
+    Theta.init[[k]] <- solve(cov(X.list[[k]])+diag(nu, p))
   }
+
   add <- function(x) Reduce("+", x)
-  Theta.abs<- lapply(Theta.init, abs)
-  weight<- sqrt(add(Theta.abs))
-  weight<-apply(weight,1:2, function(x) 1/max(x,10^(-10)))
-  ###tuning parameter
-  if(is.null(lam.const)){
-    bic.re<-NULL
-    for(const in seq(0.2,2,length.out=10)){
-      bic.cur<-0
-      Theta.hat<-list()
-      for(k in 1: K){
-        Theta.re<-glasso::glasso(cov(X.list[[k]]), rho=const*2*sqrt(log(p)/n.vec[k])*weight, wi.init=Theta.init[[k]], maxit=100)
-        Theta.hat[[k]]<-Theta.re$wi
-        bic.cur <- bic.cur+Dist(X.test=X.list[[k]], Theta.hat[[k]], diag(1,p))$te+log(n.vec[k])*sum(Theta.hat[[k]]!=0)/2/n.vec[k]
+  Theta.abs <- lapply(Theta.init, abs)
+  weight <- sqrt(add(Theta.abs))
+  weight <- apply(weight, 1:2, function(x) 1/max(x, 10^(-10)))
+  # Tuning parameter
+  if(is.null(lam.const)) {
+    bic.re <- NULL
+    for(const in seq(0.2, 2, length.out=10)) {
+      bic.cur <- 0
+      Theta.hat <- list()
+      for(k in 1:K) {
+        Theta.re <- glasso::glasso(cov(X.list[[k]]), rho=const*2*sqrt(log(p)/n.vec[k])*weight, wi.init=Theta.init[[k]], maxit=100)
+        Theta.hat[[k]] <- Theta.re$wi
+        bic.cur <- bic.cur + Dist(X.test=X.list[[k]], Theta.hat[[k]], diag(1,p))$te+log(n.vec[k])*sum(Theta.hat[[k]]!=0)/2/n.vec[k]
       }
-      bic.re<-c(bic.re,bic.cur)
+      bic.re <- c(bic.re, bic.cur)
     }
-    lam.const=seq(0.2,2,length.out=10)[which.min(bic.re)]
-    cat(lam.const,'\n')
+    lam.const = seq(0.2, 2, length.out=10)[which.min(bic.re)]
   }
-  ####running joint minimization for 10 rounds
-  Theta.hat<-list()
-  for(tt in 1:10){
-    for(k in 1: K){
-      Theta.re<-glasso::glasso(cov(X.list[[k]]), rho=lam.const*2*sqrt(log(p)/n.vec[k])*weight, wi.init=Theta.init[[k]], maxit=100)
-      Theta.hat[[k]]<-Theta.re$wi
+  # Running joint minimization for 10 rounds
+  Theta.hat <- list()
+  for(tt in 1:10) {
+    for(k in 1:K) {
+      Theta.re <- glasso::glasso(cov(X.list[[k]]), rho=lam.const*2*sqrt(log(p)/n.vec[k])*weight, wi.init=Theta.init[[k]], maxit=100)
+      Theta.hat[[k]] <- Theta.re$wi
     }
-    cat('tt=',tt,max(abs(Theta.hat[[1]]-Theta.init[[1]])),'\n')
-    if(max(abs(Theta.hat[[1]]-Theta.init[[1]]))<=0.01){ break
-    }else{
-      Theta.init<-Theta.hat
+    if(max(abs(Theta.hat[[1]]-Theta.init[[1]])) <= 0.01) {
+      break
+    } else {
+      Theta.init <- Theta.hat
     }
     add <- function(x) Reduce("+", x)
-    Theta.abs<- lapply(Theta.init, abs)
-    weight<- sqrt(add(Theta.abs))
-    weight<-apply(weight,1:2, function(x) 1/max(x,10^(-10)))
+    Theta.abs <- lapply(Theta.init, abs)
+    weight <- sqrt(add(Theta.abs))
+    weight <- apply(weight, 1:2, function(x) 1/max(x, 10^(-10)))
   }
   return(list(Theta.hat=Theta.hat[[1]], lam.const=lam.const))
 }
